@@ -53,17 +53,17 @@ class Cell(object):
 
     def __getitem__(self, key):
         return self._obs[key]
-    
+
     def __len__(self):
         return self.size
-    
+
     def get_index(self, cell_list=None):
         if cell_list is None:
             return np.arange(self.size)
-        
+
         if isinstance(cell_list, (int, np.integer, str)):
             cell_list = [cell_list]
-        
+
         if isinstance(cell_list, (list, np.ndarray, pd.Index)):
             cell_list = np.array(cell_list)
             if isinstance(cell_list[0], (int, np.integer)):
@@ -74,35 +74,35 @@ class Cell(object):
             return cell_index
         else:
             raise TypeError('cell_list must be a int or str or list or np.ndarray or pd.Index object.')
-    
+
     @property
     def matrix(self):
         return self._matrix
-    
+
     @property
     def pairwise(self):
         return self._pairwise
-    
+
     @property
     def size(self):
         return self._obs.index.size
-    
+
     @property
     def shape(self):
         return self._obs.shape
-    
+
     @property
     def loc(self):
         return self._obs.loc
-    
+
     @property
     def iloc(self):
         return self._obs.iloc
-    
+
     @property
     def to_csv(self):
         return self._obs.to_csv
-    
+
     @property
     def obs(self):
         return self._obs
@@ -170,6 +170,15 @@ class Cell(object):
             raise TypeError('cell border must be a np.ndarray object.')
         if len(cell_border.shape) != 3:
             raise Exception(f'The cell border must have 3 dimensions, but now {len(cell_border.shape)}.')
+
+        # Ignore filled values
+        filled_values, counts = np.unique([cell_borders[:, -1]], return_counts=True)
+        filled_value = filled_values[np.argmax(counts)]
+        cell_borders = [
+            border[np.sum(border != filled_value, axis=1) == 2]
+            for border in cell_border
+        ]
+
         self._matrix['cell_border'] = cell_border
 
     @property
@@ -177,7 +186,7 @@ class Cell(object):
         if 'batch' not in self._obs.columns:
             return None
         return self._obs['batch'].to_numpy()
-    
+
     @batch.setter
     def batch(self, batch):
         if batch is not None:
@@ -234,10 +243,11 @@ class Cell(object):
                     elif isinstance(v, (np.ndarray, spmatrix)):
                         self._pairwise[key][k] = v[index][:, index]
                     else:
-                        logger.warning(f'Subsetting from {key}.{k} of type {type(v)} in cell.pairwise is not supported.')
+                        logger.warning(
+                            f'Subsetting from {key}.{k} of type {type(v)} in cell.pairwise is not supported.')
             else:
                 logger.warning(f'Subsetting from {key} of type {type(value)} in cell.pairwise is not supported.')
-        
+
         self._remove_unused_categories()
         return self
 
@@ -271,18 +281,19 @@ class Cell(object):
     def _repr_html_(self):
         obs: pd.DataFrame = self.to_df()
         return obs._repr_html_()
-    
+
     def _remove_unused_categories(self):
         for col in self.obs.columns:
             if self.obs[col].dtype.name == 'category':
                 self.obs[col] = self.obs[col].cat.remove_unused_categories()
-        
+
         for ins in (self._matrix, self._pairwise):
             for key, value in ins.items():
                 if isinstance(value, pd.DataFrame):
                     for col in value.columns:
                         if value[col].dtype.name == 'category':
                             value[col] = value[col].cat.remove_unused_categories()
+
 
 class AnnBasedCell(Cell):
 
@@ -329,23 +340,23 @@ class AnnBasedCell(Cell):
     @property
     def _obs(self):
         return self.__based_ann_data._obs
-    
+
     @property
     def obs(self):
         return self.__based_ann_data.obs
-    
+
     @property
     def matrix(self):
         return self.__based_ann_data.obsm
-    
+
     @property
     def pairwise(self):
         return self.__based_ann_data.obsp
-    
+
     # @property
     # def loc(self):
     #     return self.__based_ann_data.obs.loc
-    
+
     # @property
     # def iloc(self):
     #     return self.__based_ann_data.obs.iloc
@@ -406,13 +417,13 @@ class AnnBasedCell(Cell):
     def n_genes_by_counts(self, new_n_genes_by_counts):
         if new_n_genes_by_counts is not None:
             self.__based_ann_data.obs['n_genes_by_counts'] = new_n_genes_by_counts
-    
+
     # @property
     # def batch(self):
     #     if 'batch' not in self.__based_ann_data._obs.columns:
     #         return None
     #     return self.__based_ann_data._obs['batch'].to_numpy()
-    
+
     # @Cell.batch.setter
     # def batch(self, batch):
     #     self.__based_ann_data.obs['batch'] = self._set_batch(batch)
@@ -421,7 +432,7 @@ class AnnBasedCell(Cell):
     @property
     def cell_border(self):
         return self.__based_ann_data.obsm.get('cell_border', None)
-    
+
     @cell_border.setter
     def cell_border(self, cell_border: np.ndarray):
         if not isinstance(cell_border, np.ndarray):

@@ -125,7 +125,7 @@ def read_gem(
     genes_dict = dict(zip(genes, range(0, len(genes))))
     rows = df['cell_id'].map(cells_dict)
     cols = df['geneID'].map(genes_dict)
-    # logger.info(f'the martrix has {len(cells)} cells, and {len(genes)} genes.')
+    # print(f'the martrix has {len(cells)} cells, and {len(genes)} genes.')
     exp_matrix = csr_matrix((df['UMICount'], (rows, cols)), shape=(cells.shape[0], genes.shape[0]), dtype=np.int32)
     data.exp_matrix = exp_matrix if is_sparse else exp_matrix.toarray()
     data.cells = Cell(cell_name=cells)
@@ -159,7 +159,7 @@ def read_gem(
         'resolution': resolution,
     }
     data.center_coordinates = center_coordinates
-    logger.info(f'the martrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
+    print(f'the martrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
     return data
 
 
@@ -959,15 +959,15 @@ def stereo_to_anndata(
         adata = base_adata
 
     # sample id
-    logger.info(f"Adding {sample_id} in adata.obs['orig.ident'].")
+    print(f"Adding {sample_id} in adata.obs['orig.ident'].")
     adata.obs['orig.ident'] = pd.Categorical([sample_id] * adata.obs.shape[0], categories=[sample_id])
     if (data.position is not None) and ('spatial' not in adata.obsm):
-        logger.info("Adding data.position as adata.obsm['spatial'] .")
+        print("Adding data.position as adata.obsm['spatial'] .")
         if data.position_z is not None:
             adata.obsm['spatial'] = np.concatenate([data.position, data.position_z], axis=1)
         else:
             adata.obsm['spatial'] = data.position
-        logger.info("Adding data.position as adata.obs['x'] and adata.obs['y'] .")
+        print("Adding data.position as adata.obs['x'] and adata.obs['y'] .")
         cell_names_index = data.cell_names.astype('str')
         adata.obs['x'] = pd.DataFrame(data.position[:, 0], index=cell_names_index)
         adata.obs['y'] = pd.DataFrame(data.position[:, 1], index=cell_names_index)
@@ -1007,7 +1007,7 @@ def stereo_to_anndata(
         if data.tl.key_record[key]:
             if key == 'hvg':
                 res_key = data.tl.key_record[key][-1]
-                logger.info(f"Adding data.tl.result['{res_key}'] into adata.var .")
+                print(f"Adding data.tl.result['{res_key}'] into adata.var .")
                 adata.uns[key] = {'params': {}, 'source': 'stereopy', 'method': key}
                 for i in data.tl.result[res_key]:
                     adata.var[i] = data.tl.result[res_key][i]
@@ -1050,12 +1050,12 @@ def stereo_to_anndata(
                 # pca :we do not keep variance and PCs(for varm which will be into feature.finding in pca of seurat.)
                 res_key = data.tl.key_record[key][-1]
                 sc_key = f'X_{key}'
-                logger.info(f"Adding data.tl.result['{res_key}'] into adata.obsm['{sc_key}'] .")
+                print(f"Adding data.tl.result['{res_key}'] into adata.obsm['{sc_key}'] .")
                 adata.obsm[sc_key] = data.tl.result[res_key].values
                 if key == 'pca':
                     variance_ratio_key = f'{res_key}_variance_ratio'
                     if variance_ratio_key in data.tl.result:
-                        logger.info(
+                        print(
                             f"Adding data.tl.result['{variance_ratio_key}'] into adata.uns['{key}_variance_ratio'] .")
                         adata.uns[variance_ratio_key] = data.tl.result[variance_ratio_key]
             elif key == 'neighbors':
@@ -1064,11 +1064,11 @@ def stereo_to_anndata(
                 for res_key in data.tl.key_record[key]:
                     sc_con = 'connectivities' if res_key == 'neighbors' else f'{res_key}_connectivities'
                     sc_dis = 'distances' if res_key == 'neighbors' else f'{res_key}_distances'
-                    logger.info(f"Adding data.tl.result['{res_key}']['connectivities'] into adata.obsp['{sc_con}'] .")
-                    logger.info(f"Adding data.tl.result['{res_key}']['nn_dist'] into adata.obsp['{sc_dis}'] .")
+                    print(f"Adding data.tl.result['{res_key}']['connectivities'] into adata.obsp['{sc_con}'] .")
+                    print(f"Adding data.tl.result['{res_key}']['nn_dist'] into adata.obsp['{sc_dis}'] .")
                     adata.obsp[sc_con] = data.tl.result[res_key]['connectivities']
                     adata.obsp[sc_dis] = data.tl.result[res_key]['nn_dist']
-                    logger.info(f"Adding info into adata.uns['{res_key}'].")
+                    print(f"Adding info into adata.uns['{res_key}'].")
                     adata.uns[res_key] = {}
                     adata.uns[res_key]['connectivities_key'] = sc_con
                     adata.uns[res_key]['distances_key'] = sc_dis
@@ -1077,17 +1077,17 @@ def stereo_to_anndata(
             elif key == 'cluster':
                 cell_name_index = data.cells.cell_name.astype('str')
                 for res_key in data.tl.key_record[key]:
-                    logger.info(f"Adding data.tl.result['{res_key}'] into adata.obs['{res_key}'] .")
+                    print(f"Adding data.tl.result['{res_key}'] into adata.obs['{res_key}'] .")
                     adata.obs[res_key] = pd.DataFrame(data.tl.result[res_key]['group'].values, index=cell_name_index)
             elif key in ('gene_exp_cluster', 'cell_cell_communication'):
                 for res_key in data.tl.key_record[key]:
-                    # logger.info(f"Adding data.tl.result['{res_key}'] into adata.uns['{key}@{res_key}']")
+                    # print(f"Adding data.tl.result['{res_key}'] into adata.uns['{key}@{res_key}']")
                     # adata.uns[f"{key}@{res_key}"] = data.tl.result[res_key]
-                    logger.info(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}']")
+                    print(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}']")
                     adata.uns[res_key] = data.tl.result[res_key]
             # elif key == 'regulatory_network_inference':
             #     for res_key in data.tl.key_record[key]:
-            #         logger.info(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}'] .")
+            #         print(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}'] .")
             #         regulon_key = f'{res_key}_regulons'
             #         res_key_data = data.tl.result[res_key]
             #         adata.uns[regulon_key] = res_key_data['regulons']
@@ -1097,7 +1097,7 @@ def stereo_to_anndata(
             #         adata.uns[adjacencies_key] = res_key_data['adjacencies']
             elif key in ('co_occurrence', 'regulatory_network_inference'):
                 for res_key in data.tl.key_record[key]:
-                    logger.info(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}'] .")
+                    print(f"Adding data.tl.result['{res_key}'] into adata.uns['{res_key}'] .")
                     adata.uns[res_key] = data.tl.result[res_key]
             elif key == 'marker_genes':
                 for res_key in data.tl.key_record[key]:
@@ -1115,21 +1115,21 @@ def stereo_to_anndata(
     if data.tl.raw is not None:
         if flavor == 'seurat':
             # keep same shape between @counts and @data for seurat,because somtimes dim of sct are not the same.
-            logger.info("Adding data.tl.raw.exp_matrix as adata.uns['raw_counts'] .")
+            print("Adding data.tl.raw.exp_matrix as adata.uns['raw_counts'] .")
             adata.uns['raw_counts'] = data.tl.raw.exp_matrix if issparse(data.tl.raw.exp_matrix) \
                 else csr_matrix(data.tl.raw.exp_matrix)
             list_cell_names = data.tl.raw.cell_names.astype(str)
             adata.uns['raw_cellname'] = list(list_cell_names)
             adata.uns['raw_genename'] = list(data.tl.raw.gene_names)
             if data.tl.raw.position is not None and reindex:
-                logger.info("Reindex as adata.uns['raw_cellname'] .")
+                print("Reindex as adata.uns['raw_cellname'] .")
                 raw_sample = pd.DataFrame(['sample'] * data.tl.raw.cell_names.shape[0], index=list_cell_names)
                 raw_x = pd.DataFrame(data.tl.raw.position[:, 0].astype(str), index=list_cell_names)
                 raw_y = pd.DataFrame(data.tl.raw.position[:, 1].astype(str), index=list_cell_names)
                 new_ix = np.array(raw_sample + "_" + raw_x + "_" + raw_y).tolist()
                 adata.uns['raw_cellname'] = new_ix
         else:
-            logger.info("Adding data.tl.raw.exp_matrix as adata.raw .")
+            print("Adding data.tl.raw.exp_matrix as adata.raw .")
             raw_exp = data.tl.raw.exp_matrix
             raw_genes = data.tl.raw.genes.to_df()
             raw_genes.dropna(axis=1, how='all', inplace=True)
@@ -1138,16 +1138,16 @@ def stereo_to_anndata(
             adata.raw = raw_adata
 
     if reindex:
-        logger.info("Reindex adata.X .")
+        print("Reindex adata.X .")
         new_ix = (adata.obs['orig.ident'].astype(str) + ":" + adata.obs['x'].astype(str) + "_" +
                   adata.obs['y'].astype(str)).tolist()
         adata.obs.index = new_ix
         if 'sct_cellname' in adata.uns.keys():
-            logger.info("Reindex as adata.uns['sct_cellname'] .")
+            print("Reindex as adata.uns['sct_cellname'] .")
             adata.uns['sct_cellname'] = new_ix
 
     if flavor == 'seurat':
-        logger.info("Rename QC info.")
+        print("Rename QC info.")
         adata.obs.rename(columns={'total_counts': "nCount_Spatial", "n_genes_by_counts": "nFeature_Spatial",
                                   "pct_counts_mt": 'percent.mito'}, inplace=True)
 
@@ -1208,11 +1208,11 @@ def stereo_to_anndata(
 
     if len(data.tl.result.keys()) > 0:
         adata.uns['result_keys'] = list(data.tl.result.keys())
-    logger.info("Finished conversion to anndata.")
+    print("Finished conversion to anndata.")
 
     if output is not None:
         adata.write_h5ad(output, compression=compression)
-        logger.info(f"Finished output to {output}")
+        print(f"Finished output to {output}")
 
     return adata
 
@@ -1326,7 +1326,7 @@ def read_gef(
     ------------------------
     An object of StereoExpData.
     """
-    logger.info('read_gef begin ...')
+    print('read_gef begin ...')
     from gefpy.utils import gef_is_cell_bin
     is_cell_bin = gef_is_cell_bin(file_path)
     if bin_type == 'cell_bins':
@@ -1401,7 +1401,7 @@ def read_gef(
         data.attr = {
             'resolution': read_gef_info(file_path)['resolution']
         }
-        logger.info(f'the matrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
+        print(f'the matrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
         gef.cgef_close()
         return data
     else:
@@ -1476,8 +1476,8 @@ def read_gef(
             data.position = np.array(list(
                 (zip(np.right_shift(cell_names, 32), np.bitwise_and(cell_names, 0xffffffff))))).astype('uint32')
 
-        logger.info(f'the matrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
-    logger.info('read_gef end.')
+        print(f'the matrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
+    print('read_gef end.')
 
     return data
 
@@ -1505,20 +1505,20 @@ def read_gef_info(file_path: str):
     info_dict = {}
 
     if not bin_type:
-        logger.info('This is GEF file which contains traditional bin infomation.')
-        logger.info('bin_type: bins')
+        print('This is GEF file which contains traditional bin infomation.')
+        print('bin_type: bins')
 
         info_dict['bin_list'] = list(h5_file['geneExp'].keys())
-        logger.info('Bin size list: {0}'.format(info_dict['bin_list']))
+        print('Bin size list: {0}'.format(info_dict['bin_list']))
 
         if type(h5_file['geneExp']['bin1']['expression'].attrs['resolution']) is np.ndarray:
             info_dict['resolution'] = h5_file['geneExp']['bin1']['expression'].attrs['resolution'][0]
         else:
             info_dict['resolution'] = h5_file['geneExp']['bin1']['expression'].attrs['resolution']
-        logger.info('Resolution: {0}'.format(info_dict['resolution']))
+        print('Resolution: {0}'.format(info_dict['resolution']))
 
         info_dict['gene_count'] = h5_file['geneExp']['bin1']['gene'].shape[0]
-        logger.info('Gene count: {0}'.format(info_dict['gene_count']))
+        print('Gene count: {0}'.format(info_dict['gene_count']))
 
         maxX = h5_file['geneExp']['bin1']['expression'].attrs['maxX'][0]
         minX = h5_file['geneExp']['bin1']['expression'].attrs['minX'][0]
@@ -1527,53 +1527,53 @@ def read_gef_info(file_path: str):
         minY = h5_file['geneExp']['bin1']['expression'].attrs['minY'][0]
 
         info_dict['offsetX'] = minX
-        logger.info('offsetX: {0}'.format(info_dict['offsetX']))
+        print('offsetX: {0}'.format(info_dict['offsetX']))
 
         info_dict['offsetY'] = minY
-        logger.info('offsetY: {0}'.format(info_dict['offsetY']))
+        print('offsetY: {0}'.format(info_dict['offsetY']))
 
         info_dict['width'] = maxX - minX
-        logger.info('Width: {0}'.format(info_dict['width']))
+        print('Width: {0}'.format(info_dict['width']))
 
         info_dict['height'] = maxY - minY
-        logger.info('Height: {0}'.format(info_dict['height']))
+        print('Height: {0}'.format(info_dict['height']))
 
         info_dict['maxExp'] = h5_file['geneExp']['bin1']['expression'].attrs['maxExp'][0]
-        logger.info('Max Exp: {0}'.format(info_dict['maxExp']))
+        print('Max Exp: {0}'.format(info_dict['maxExp']))
 
     else:
-        logger.info('This is GEF file which contains cell bin infomation.')
-        logger.info('bin_type: cell_bins')
+        print('This is GEF file which contains cell bin infomation.')
+        print('bin_type: cell_bins')
 
         from gefpy.cgef_reader_cy import CgefR
         cgef = CgefR(file_path)
 
         info_dict['cell_num'] = cgef.get_cell_num()
-        logger.info('Number of cells: {0}'.format(info_dict['cell_num']))
+        print('Number of cells: {0}'.format(info_dict['cell_num']))
 
         info_dict['gene_num'] = cgef.get_gene_num()
-        logger.info('Number of gene: {0}'.format(info_dict['gene_num']))
+        print('Number of gene: {0}'.format(info_dict['gene_num']))
 
         info_dict['resolution'] = h5_file.attrs['resolution'][0]
-        logger.info('Resolution: {0}'.format(info_dict['resolution']))
+        print('Resolution: {0}'.format(info_dict['resolution']))
 
         info_dict['offsetX'] = h5_file.attrs['offsetX'][0]
-        logger.info('offsetX: {0}'.format(info_dict['offsetX']))
+        print('offsetX: {0}'.format(info_dict['offsetX']))
 
         info_dict['offsetY'] = h5_file.attrs['offsetY'][0]
-        logger.info('offsetY: {0}'.format(info_dict['offsetY']))
+        print('offsetY: {0}'.format(info_dict['offsetY']))
 
         info_dict['averageGeneCount'] = h5_file['cellBin']['cell'].attrs['averageGeneCount'][0]
-        logger.info('Average number of genes: {0}'.format(info_dict['averageGeneCount']))
+        print('Average number of genes: {0}'.format(info_dict['averageGeneCount']))
 
         info_dict['maxGeneCount'] = h5_file['cellBin']['cell'].attrs['maxGeneCount'][0]
-        logger.info('Maximum number of genes: {0}'.format(info_dict['maxGeneCount']))
+        print('Maximum number of genes: {0}'.format(info_dict['maxGeneCount']))
 
         info_dict['averageExpCount'] = h5_file['cellBin']['cell'].attrs['averageExpCount'][0]
-        logger.info('Average expression: {0}'.format(info_dict['averageExpCount']))
+        print('Average expression: {0}'.format(info_dict['averageExpCount']))
 
         info_dict['maxExpCount'] = h5_file['cellBin']['cell'].attrs['maxExpCount'][0]
-        logger.info('Maximum expression: {0}'.format(info_dict['maxExpCount']))
+        print('Maximum expression: {0}'.format(info_dict['maxExpCount']))
 
     return info_dict
 
