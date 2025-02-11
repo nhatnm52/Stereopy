@@ -30,7 +30,6 @@ from stereo.core.ms_data import MSData
 from stereo.io import h5ad, stereo_to_anndata
 from stereo.log_manager import logger, LogManager
 
-from .reader import to_interval
 
 environ['HDF5_USE_FILE_LOCKING'] = "FALSE"
 
@@ -44,7 +43,7 @@ def write_h5ad(
         split_batches: bool = True):
     """
     Write the **StereoExpData** object into a h5 file, we recommend you to set the suffix of the file as **.h5st**.
-    
+
     This is a specific format for **StereoExpData** object, not the format of **AnnData** which is suffixed with **.h5ad**.
 
     When reading it back using `st.io.read_h5ad`, the parameter `flavor` should be set to **'stereopy'**.
@@ -54,7 +53,7 @@ def write_h5ad(
     .. seealso::
 
         `st.io.read_h5ad <stereo.io.read_h5ad.html>`_
-        
+
         `st.io.stereo_to_anndata <stereo.io.stereo_to_anndata.html>`_
 
     Parameters
@@ -143,10 +142,10 @@ def _write_one_h5ad(f: h5py.File, data: StereoExpData, use_raw=False, use_result
     # else:
     #     h5ad.write(data.exp_matrix, f, 'exp_matrix')
     h5ad.write(data.exp_matrix, f, 'exp_matrix')
-    
+
     h5ad.write(data.layers, f, 'layers')
-    
-    
+
+
     # h5ad.write(data.bin_type, f, 'bin_type')
     # h5ad.write(data.bin_size, f, 'bin_size')
     # h5ad.write(data.merged, f, 'merged')
@@ -318,11 +317,11 @@ def _write_one_anndata(f: h5py.Group, data: AnnBasedStereoExpData):
         raise e
     finally:
         LogManager.start_logging()
-    
+
     adata.strings_to_categoricals()
     if adata.raw is not None:
         adata.strings_to_categoricals(adata.raw.var)
-    
+
     f.attrs.setdefault("encoding-type", "anndata")
     f.attrs.setdefault("encoding-version", "0.1.0")
     f.attrs.setdefault("spatial_key", data.spatial_key)
@@ -579,7 +578,7 @@ def write_h5mu(ms_data: MSData, output: str = None, compression: Optional[Litera
         from mudata import MuData
     except ImportError:
         raise ImportError("Please install the mudata: pip install mudata.")
-    
+
     adata_list = []
     adata_keys = []
     for i, data in enumerate(ms_data.data_list):
@@ -588,7 +587,7 @@ def write_h5mu(ms_data: MSData, output: str = None, compression: Optional[Litera
         # adata_dict[saved_name] = adata
         adata_list.append(adata)
         adata_keys.append(saved_name)
-    
+
     merged_adata_list = []
     merged_adata_keys = []
     # merged_adata_all = None
@@ -609,9 +608,9 @@ def write_h5mu(ms_data: MSData, output: str = None, compression: Optional[Litera
     #     _relationship_info=deepcopy(ms_data.relationship_info)
     # )
     # new_ms_data.tl.result_keys = deepcopy(ms_data.tl.result_keys)
-    
+
     result_keys = ms_data.tl._reset_result_keys(ms_data.tl.result_keys)
-    
+
     adata_dict = {key: adata for key, adata in zip(adata_keys, adata_list)}
     adata_dict.update({key: adata for key, adata in zip(merged_adata_keys, merged_adata_list)})
     mudata = MuData(adata_dict)
@@ -624,5 +623,5 @@ def write_h5mu(ms_data: MSData, output: str = None, compression: Optional[Litera
 
     if output is not None:
         mudata.write_h5mu(output, compression=compression)
-    
+
     return mudata

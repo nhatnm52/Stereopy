@@ -8,9 +8,7 @@ from joblib import (
 import numpy as np
 
 from stereo.log_manager import logger
-from stereo.core import StPipeline
 from stereo.core.result import MSDataPipeLineResult
-from stereo.plots.decorator import download, download_only
 
 
 class _scope_slice(object):
@@ -51,31 +49,31 @@ class MSDataPipeLine(object):
     @key_record.setter
     def key_record(self, key_record):
         self._key_record = key_record
-    
+
     @property
     def result_keys(self):
         return self._result_keys
-    
+
     @result_keys.setter
     def result_keys(self, result_keys):
         self._result_keys = self._reset_result_keys(result_keys)
-    
+
     @property
     def mode(self):
         return self.__mode
-    
+
     @mode.setter
     def mode(self, mode):
         self.__mode = mode
-    
+
     @property
-    def scope(self):    
+    def scope(self):
         return self.__scope
-    
+
     @scope.setter
     def scope(self, scope):
         self.__scope = scope
-    
+
     def _reset_result_keys(self, origin_result_keys: dict = None):
         result_keys = {}
         for scope_key, scope_result_keys in origin_result_keys.items():
@@ -114,6 +112,8 @@ class MSDataPipeLine(object):
                     return new_attr(*args, **kwargs)
             else:
                 from stereo.plots.plot_base import PlotBase
+                from stereo.plots.decorator import download
+
                 merged_data = ms_data_view.merged_data
                 new_attr = download(PlotBase.get_attribute_helper(item, merged_data, merged_data.tl.result))
                 if new_attr:
@@ -166,6 +166,8 @@ class MSDataPipeLine(object):
                 base = PlotBase
 
             def log_delayed_task(idx, obj, *arg, **kwargs):
+                from stereo.plots.decorator import download_only
+
                 logger.info(f'data_obj(idx={idx}) in ms_data start to run {item}')
                 new_attr = base.get_attribute_helper(item, obj, obj.tl.result)
                 if base.__name__ == 'PlotBase':
@@ -200,6 +202,8 @@ class MSDataPipeLine(object):
                 return run_method
         elif self.__class__.ATTR_NAME == 'plt':
             from stereo.plots.ms_plot_base import MSDataPlotBase
+            from stereo.plots.decorator import download
+
             run_method = MSDataPlotBase.get_attribute_helper(item, self.ms_data, self.ms_data.tl.result)
             if run_method:
                 return download(run_method)
@@ -219,7 +223,7 @@ class MSDataPipeLine(object):
                 raise Exception("`mode` should be one of [`integrate`, `isolated`]")
 
         return temp
-    
+
     def set_scope_and_mode(
         self,
         scope: slice = slice(None),

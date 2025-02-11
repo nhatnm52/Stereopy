@@ -26,7 +26,7 @@ from scipy.sparse import (
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
-from typing_extensions import Literal
+from typing import Literal
 
 from ..log_manager import logger
 

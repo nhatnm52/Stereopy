@@ -6,12 +6,8 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from . import(
-    StPipeline, AnnBasedStPipeline,
-    StereoExpData, AnnBasedStereoExpData
-)
+from . import StereoExpData
 from .ms_pipeline import MSDataPipeLine
-from ..plots.plot_collection import PlotCollection
 
 
 def _default_idx() -> int:
@@ -31,7 +27,7 @@ class _MSDataView(object):
 
     def __post_init__(self):
         for name, data in zip(self._names, self._data_list):
-            self._name_dict[name] = data 
+            self._name_dict[name] = data
 
     def __get_data_list(self, key_idx_list):
         data_list = []
@@ -51,7 +47,7 @@ class _MSDataView(object):
             else:
                 raise KeyError(ki)
         return data_list, names
-    
+
     def __check_slice(self, slice_obj: slice):
         if not isinstance(slice_obj, slice):
             raise TypeError(f'{slice_obj} should be slice')
@@ -72,9 +68,8 @@ class _MSDataView(object):
 
         if slice_obj.step is not None and not isinstance(slice_obj.step, (int, np.integer)):
             raise TypeError(f'slice.step should be int')
-        
+
         return slice(new_start, new_stop, slice_obj.step)
-    
 
     def __getitem__(self, key: Union[str, int, list, tuple, np.ndarray, pd.Index, slice]) -> Union[StereoExpData, _MSDataView]:
         if isinstance(key, (str, np.str_)):
@@ -107,18 +102,18 @@ class _MSDataView(object):
     @property
     def data_list(self):
         return self._data_list
-    
+
     @property
     def names(self):
         return self._names
-    
+
     @property
     def num_slice(self):
         return len(self._data_list)
 
     def __str__(self):
         return f'''data_list: {len(self._data_list)}'''
-    
+
     def __len__(self):
         return len(self._data_list)
 
@@ -127,12 +122,11 @@ class _MSDataView(object):
         if self._merged_data is None:
             self._merged_data = self._msdata.integrate(scope=self._names)
         return self._merged_data
-    
+
     @merged_data.setter
     def merged_data(self, merged_data):
         self._merged_data = merged_data
 
-    
     def to_msdata(self) -> MSData:
         return MSData(
             _data_list=deepcopy(self._data_list),
@@ -281,7 +275,8 @@ class _MSDataStruct(object):
         first_data = data_list[0]
         for data in data_list[1:]:
             if type(data) != type(first_data):
-                raise TypeError('each data in data_list must be the same type, available types: StereoExpData and AnnBasedStereoExpData')
+                raise TypeError(
+                    'each data in data_list must be the same type, available types: StereoExpData and AnnBasedStereoExpData')
         return data_list
 
     def __post_init__(self) -> object:
@@ -291,14 +286,14 @@ class _MSDataStruct(object):
             self.reset_name(default_key=False)
         self.__check_data_list(self._data_list)
         return self
-    
+
     def __iter__(self):
         return iter(self._data_list)
 
     @property
     def data_list(self):
         return self._data_list
-    
+
     @data_list.setter
     def data_list(self, data_list: List[StereoExpData]):
         self.__check_data_list(data_list)
@@ -323,11 +318,11 @@ class _MSDataStruct(object):
             raise Exception('new names\' length should be same as data_list')
         self._names = list(value)
         self.reset_name(default_key=False)
-    
+
     @property
     def var_type(self):
         return self._var_type
-    
+
     @var_type.setter
     def var_type(self, value: str):
         if value not in {'intersect', 'union'}:
@@ -347,7 +342,7 @@ class _MSDataStruct(object):
     @property
     def relationship_info(self):
         return self._relationship_info
-    
+
     @relationship_info.setter
     def relationship_info(self, value: dict):
         self._relationship_info = value
@@ -387,7 +382,7 @@ class _MSDataStruct(object):
             else:
                 raise KeyError(ki)
         return data_list, names
-    
+
     def __check_slice(self, slice_obj: slice):
         if not isinstance(slice_obj, slice):
             raise TypeError(f'{slice_obj} should be slice')
@@ -408,7 +403,7 @@ class _MSDataStruct(object):
 
         if slice_obj.step is not None and not isinstance(slice_obj.step, (int, np.integer)):
             raise TypeError(f'slice.step should be int')
-        
+
         return slice(new_start, new_stop, slice_obj.step)
 
     def __getitem__(self, key: Union[str, int, list, tuple, np.ndarray, pd.Index, slice]) -> Union[StereoExpData, _MSDataView]:
@@ -426,7 +421,6 @@ class _MSDataStruct(object):
             return _MSDataView(_msdata=self, _data_list=data_list, _names=names)
         else:
             raise KeyError(key)
-        
 
     def __setitem__(self, key, value):
         assert isinstance(key, (int, np.integer, str, np.str_))
@@ -617,16 +611,17 @@ class _MSDataStruct(object):
         if len(self._data_list) < len(self._names):
             self._names = self._names[0:len(self._data_list)]
         return self
-    
+
+
 class ScopesData(dict):
     def __init__(self, ms_data: MSData, *args, **kwargs):
         self._ms_data = ms_data
         super().__init__(*args, **kwargs)
-    
+
     def __setitem__(self, key, value):
         if not isinstance(value, StereoExpData):
             raise TypeError(f'value must be a StereoExpData object')
-        
+
         def set_result_key_method(result_key):
             self._ms_data.tl.result_keys.setdefault(key, [])
             if result_key in self._ms_data.tl.result_keys[key]:
@@ -675,11 +670,11 @@ class MSData(_MSDataStruct):
         if self._plt is None:
             self._plt = PLT(self)
         return self._plt
-    
+
     @property
     def scopes_data(self):
         return self._scopes_data
-    
+
     @scopes_data.setter
     def scopes_data(self, value):
         self._scopes_data = self.__reset_scopes_data(value)
@@ -710,7 +705,7 @@ class MSData(_MSDataStruct):
             scope_key = scope
         finally:
             return scope_key
-    
+
     def remove_scopes_data(self, scope):
         scope_key = self.generate_scope_key(scope)
         if scope_key in self._scopes_data:
@@ -718,11 +713,10 @@ class MSData(_MSDataStruct):
         if scope_key in self.tl.result_keys:
             del self.tl.result_keys[scope_key]
 
-
     def integrate(self, scope=None, remove_existed=False, **kwargs):
         """
         Integrate some single-samples specified by `scope` to a merged one.
-        
+
         :param scope: Which scope of samples to be integrated, defaults to None.
                         Each integrate sample is saved in memory, performing this function
                         by passing duplicate `scope` will return the saved one.
@@ -732,18 +726,18 @@ class MSData(_MSDataStruct):
         from stereo.utils.data_helper import merge
         if self._var_type not in {"union", "intersect"}:
             raise Exception("Please specify the operation on samples with the parameter '_var_type'")
-        
+
         if 'var_type' in kwargs:
             del kwargs['var_type']
         if 'batch_tags' in kwargs:
             del kwargs['batch_tags']
-        
+
         if remove_existed:
             self.remove_scopes_data(scope)
         scope_key = self.generate_scope_key(scope)
         if scope_key in self._scopes_data:
             return self._scopes_data[scope_key]
-        
+
         if scope == None:
             data_list = self.data_list
         else:
@@ -759,7 +753,7 @@ class MSData(_MSDataStruct):
             batch = self._names.index(self[scope].names[0])
             merged_data.cells.cell_name = np.char.add(merged_data.cells.cell_name, f'-{batch}')
             merged_data.cells.batch = batch
-        
+
         obs_columns = merged_data.cells._obs.columns.drop('batch')
         if len(obs_columns) > 0:
             merged_data.cells._obs.drop(columns=obs_columns, inplace=True)
@@ -768,17 +762,17 @@ class MSData(_MSDataStruct):
             var_columns = var_columns.drop('real_gene_name')
         if len(var_columns) > 0:
             merged_data.genes._var.drop(columns=var_columns, inplace=True)
-        
+
         # def set_result_key_method(key):
         #     self.tl.result_keys.setdefault(scope_key, [])
         #     if key in self.tl.result_keys[scope_key]:
         #         self.tl.result_keys[scope_key].remove(key)
         #     self.tl.result_keys[scope_key].append(key)
-        
+
         # merged_data.tl.result.set_result_key_method = set_result_key_method
 
         merged_data.tl.review_key_record()
-        
+
         scope_key = self.generate_scope_key(scope)
         self._scopes_data[scope_key] = merged_data
 
@@ -786,7 +780,6 @@ class MSData(_MSDataStruct):
             self._merged_data = merged_data
 
         return merged_data
-
 
     def split_after_batching_integrate(self):
         if self._var_type == "union":
@@ -807,7 +800,7 @@ class MSData(_MSDataStruct):
             cluster: bool = True
     ):
         """
-        Integrate an obs column or a var column from some single-samples spcified by `_from` to the merged sample. 
+        Integrate an obs column or a var column from some single-samples spcified by `_from` to the merged sample.
 
         :param scope: Which integrate mss group to save result.
         :param res_key: New column name in merged sample obs or var.
@@ -822,7 +815,7 @@ class MSData(_MSDataStruct):
             The length of `scope` must be equal to `_from`.
 
             The `type` just only supports 'obs' currently.
-        
+
         Examples
         --------
         Constructing MSData from 5 single-samples.
@@ -843,11 +836,11 @@ class MSData(_MSDataStruct):
         relationship: other
         var_type: intersect to 0
         mss: []
-        
+
         Integrating all samples to a merged one.
 
         >>> ms_data.integrate()
-        
+
         Integrating an obs column named as 'celltype' from first three samples to the merged sample, to name as 'celltype'
 
         >>> from stereo.core.ms_pipeline import slice_generator
@@ -867,14 +860,14 @@ class MSData(_MSDataStruct):
         if type == 'obs':
             if scope_key in self._scopes_data:
                 self._scopes_data[scope_key].cells[res_key] = fill
-            
+
             if self._merged_data is not None:
                 self._merged_data.cells[res_key] = fill
         elif type == 'var':
             raise NotImplementedError
         else:
             raise Exception(f"`type`: {type} not in ['obs', 'var'], this should not happens!")
-        
+
         data_list = self[scope]._data_list
         if item is None:
             item = res_key
@@ -911,7 +904,8 @@ class MSData(_MSDataStruct):
                 if scope_key in self._scopes_data:
                     self._scopes_data[scope_key].tl.reset_key_record('cluster', res_key)
                     self._scopes_data[scope_key].tl.result.set_result_key_method(res_key)
-                    self._scopes_data[scope_key].cells[res_key] = self._scopes_data[scope_key].cells[res_key].astype('category')
+                    self._scopes_data[scope_key].cells[res_key] = self._scopes_data[scope_key].cells[res_key].astype(
+                        'category')
 
                 if self._merged_data is not None and self._merged_data is not self._scopes_data[scope_key]:
                     self._merged_data.tl.reset_key_record('cluster', res_key)
@@ -944,11 +938,11 @@ class MSData(_MSDataStruct):
         .. note::
 
             The length of `scope` must be equal to `to`.
-            
+
             Only supports clustering result when `type` is 'obs' and hvg result when `type` is 'var'.
 
             Parameter `item` only available for obs type.
-        
+
         Examples
         --------
         Constructing MSData from 5 single-samples.
@@ -969,7 +963,7 @@ class MSData(_MSDataStruct):
         relationship: other
         var_type: intersect to 0
         mss: []
-        
+
         Integrating all samples to a merged one.
 
         >>> ms_data.integrate()
@@ -986,8 +980,8 @@ class MSData(_MSDataStruct):
 
         >>> from stereo.core.ms_pipeline import slice_generator
         >>> ms_data.to_isolated(scope=slice_generator[:], res_key='leiden', to=slice_generator[:], type='obs', item=['leiden'] * 3)
-        
-        
+
+
         """
         assert self[scope]._names == self[to]._names, f"`scope`: {scope} should equal with to: {to}"
         assert isinstance(item, str) or len(item) == len(self[to]._names), "`item`'s length not equal to `to`"
@@ -1018,7 +1012,7 @@ class MSData(_MSDataStruct):
                     stereo_exp_data.cells['batch']
                 )
                 stereo_exp_data.cells._obs[column_name] = merged_res['group']
-                
+
                 if fill is not np.NaN:
                     if stereo_exp_data.cells._obs[column_name].dtype.name == 'category':
                         stereo_exp_data.cells._obs[column_name].cat.add_categories(fill, inplace=True)
@@ -1039,7 +1033,7 @@ class MSData(_MSDataStruct):
                 stereo_exp_data.tl.reset_key_record('hvg', item[idx])
             else:
                 raise Exception(f"`type`: {type} not in ['obs', 'var'], this should not happens!")
-            
+
     @staticmethod
     def to_msdata(
         data: StereoExpData,
@@ -1049,7 +1043,7 @@ class MSData(_MSDataStruct):
     ):
         if batch_key not in data.cells:
             raise KeyError(f"The batch key '{batch_key}' is not in cells or obs.")
-        
+
         from stereo.preprocess.filter import filter_by_clusters
         batch_data = pd.DataFrame({
             'bins': data.cells.cell_name,
@@ -1062,7 +1056,7 @@ class MSData(_MSDataStruct):
             sub_data = filter_by_clusters(data, batch_key, groups=batch_code, inplace=False)
             sub_data_list.append(sub_data)
             sub_data_names.append(batch_code)
-        
+
         return MSData(_data_list=sub_data_list, _names=sub_data_names, _relationship=relationship, _var_type=var_type)
 
     def __str__(self):
@@ -1082,7 +1076,7 @@ mss: {[key + ":" + str(value) for key, value in self.tl.result_keys.items()]}
 
     def __repr__(self):
         return self.__str__()
-    
+
     def write(self, filename, to_mudata=False):
         if not to_mudata:
             from stereo.io.writer import write_h5ms

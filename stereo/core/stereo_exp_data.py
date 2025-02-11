@@ -13,10 +13,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Optional
 from typing import Union
-from warnings import warn
 
 import anndata
-import numba
 import numpy as np
 import pandas as pd
 from scipy.sparse import (
@@ -111,7 +109,7 @@ class StereoExpData(Data):
         self.spatial_key = spatial_key
         self.__set_position(position, position_z, spatial_key)
         self._layers = None
-    
+
     def __set_position(self, position, position_z=None, spatial_key='spatial'):
         assert isinstance(spatial_key, str), "spatial_key must be str."
         if position is not None:
@@ -241,10 +239,10 @@ class StereoExpData(Data):
                 index = np.isin(self.gene_names, gene_name)
             new_exp_matrix = new_exp_matrix[:, index]
         return new_exp_matrix
-    
+
     def get_index(self, cell_list=None, gene_list=None, only_highly_genes=False):
         return self.cells.get_index(cell_list), self.genes.get_index(gene_list, only_highly_genes)
-    
+
     def get_exp_matrix(
         self,
         use_raw: bool = False,
@@ -299,7 +297,7 @@ class StereoExpData(Data):
         if (bin_type is not None) and (bin_type not in ['bins', 'cell_bins']):
             logger.error(f"the bin type `{bin_type}` is not in the range, please check!")
             raise Exception
-    
+
     @property
     def layers(self):
         if self._layers is None:
@@ -484,7 +482,7 @@ class StereoExpData(Data):
     # @raw_position.setter
     # def raw_position(self, pos):
     #     self._raw_position = pos
-    
+
     @property
     def spatial(self):
         return self.cells_matrix[self.spatial_key]
@@ -764,7 +762,7 @@ class StereoExpData(Data):
             return other.__add__(self)
         else:
             raise TypeError("only support StereoExpData and MSData!")
-    
+
     def write(self, filename, to_anndata=False, **kwargs):
         if 'output' in kwargs:
             del kwargs['output']
@@ -776,17 +774,17 @@ class StereoExpData(Data):
         else:
             from stereo.io.writer import write_h5ad
             write_h5ad(self, **kwargs)
-    
+
     def to_ann_based(self):
         from stereo.io.reader import stereo_to_anndata
         adata = stereo_to_anndata(self, flavor='scanpy', split_batches=False)
         return AnnBasedStereoExpData(based_ann_data=adata)
-    
+
 
     def _remove_unused_categories(self):
         self.cells._remove_unused_categories()
         self.genes._remove_unused_categories()
-        
+
 
 
 class AnnBasedStereoExpData(StereoExpData):
@@ -819,7 +817,7 @@ class AnnBasedStereoExpData(StereoExpData):
         if 'resolution' in self._ann_data.uns:
             self.attr = {'resolution': self._ann_data.uns['resolution']}
             del self._ann_data.uns['resolution']
-        
+
         if 'merged' in self._ann_data.uns:
             self.merged = self._ann_data.uns['merged']
             del self._ann_data.uns['merged']
@@ -834,11 +832,11 @@ class AnnBasedStereoExpData(StereoExpData):
             sn = self.get_sn_from_path(h5ad_file_path)
             if sn is not None:
                 self._ann_data.uns['sn'] = pd.DataFrame([[-1, sn]], columns=['batch', 'sn'])
-        
+
         if 'position_offset' in self._ann_data.uns:
             self.position_offset = self._ann_data.uns['position_offset']
             del self._ann_data.uns['position_offset']
-        
+
         if 'position_min' in self._ann_data.uns:
             self.position_min = self._ann_data.uns['position_min']
             del self._ann_data.uns['position_min']
@@ -848,7 +846,7 @@ class AnnBasedStereoExpData(StereoExpData):
         if 'key_record' in self._ann_data.uns:
             key_record = self._ann_data.uns['key_record']
             self._tl._key_record = self._ann_data.uns['key_record'] = {key: list(value) for key, value in key_record.items()}
-        
+
         if 'result_keys' in self._ann_data.uns:
             result_keys = self._ann_data.uns['result_keys']
             self._tl.result.keys().extend(result_keys)
@@ -1077,12 +1075,12 @@ class AnnBasedStereoExpData(StereoExpData):
     #     from anndata import concat
     #     ann_data = concat([d._ann_data for d in data], axis=0, merge='same', label=batch_key, index_unique='-')
     #     return AnnBasedStereoExpData(based_ann_data=ann_data)
-    
-    
+
+
     @property
     def adata(self):
         return self._ann_data
-    
+
     def write(self, filename, **kwargs):
         from stereo.io.reader import stereo_to_anndata
         if 'output' in kwargs:

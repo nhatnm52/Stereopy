@@ -13,12 +13,7 @@ from typing import Union
 from collections import OrderedDict
 from copy import deepcopy
 
-import matplotlib.colors as mpl_colors
-from colorcet import palette, aliases, cetnames_flipped
-from matplotlib import rcParams
-from matplotlib import rcParamsDefault
 import numpy as np
-import seaborn as sns
 
 
 class StereoConfig(object):
@@ -51,11 +46,10 @@ class StereoConfig(object):
         self.data_dir = data_dir if data_dir else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
         self._palette_custom = None
 
-
     @property
     def palette_custom(self):
         return self._palette_custom
-    
+
     @palette_custom.setter
     def palette_custom(self, palette_custom):
         if not isinstance(palette_custom, list):
@@ -64,6 +58,8 @@ class StereoConfig(object):
 
     @property
     def colormaps(self):
+        from colorcet import palette
+
         color_keys = sorted([k for k in palette.keys() if 'glasbey' in k and '_bw_' not in k])
         colormaps = OrderedDict([(k, palette[k]) for k in color_keys])
         # colormaps = {k: v for k, v in palette.items() if 'glasbey' in k and '_bw_' not in k}
@@ -80,7 +76,11 @@ class StereoConfig(object):
 
     @property
     def linear_colormaps(self):
-        color_keys = sorted([k for k in palette.keys() if not ('glasbey' in k or k in aliases or k in cetnames_flipped)])
+        from colorcet import palette, aliases, cetnames_flipped
+        import matplotlib.colors as mpl_colors
+
+        color_keys = sorted([k for k in palette.keys() if not (
+            'glasbey' in k or k in aliases or k in cetnames_flipped)])
         colormaps = OrderedDict([(k, palette[k]) for k in color_keys])
 
         stmap_colors = ['#0c3383', '#0a88ba', '#f2d338', '#f28f38', '#d91e1e']
@@ -91,7 +91,12 @@ class StereoConfig(object):
         return colormaps
 
     def linear_colors(self, colors, reverse=False):
+        from colorcet import palette
+        import matplotlib.colors as mpl_colors
+        import seaborn as sns
+
         if isinstance(colors, str):
+
             linear_colormaps = deepcopy(palette)
             linear_colormaps.update(self.linear_colormaps)
             if colors not in linear_colormaps:
@@ -109,7 +114,12 @@ class StereoConfig(object):
             raise ValueError('colors should be str or list type')
 
     def get_colors(self, colors, n=None, order=None):
+        from colorcet import palette
+        import matplotlib.colors as mpl_colors
+        import seaborn as sns
+
         if isinstance(colors, str):
+
             colormaps = deepcopy(palette)
             colormaps.update(self.colormaps)
             if colors not in colormaps:
@@ -127,7 +137,7 @@ class StereoConfig(object):
             colormaps_selected = list(colors)
         else:
             raise ValueError('colors should be str, dict, list, tuple or np.ndarray type')
-        
+
         if n is not None:
             if n > len(colormaps_selected):
                 mycmap = mpl_colors.LinearSegmentedColormap.from_list("mycmap", colormaps_selected, N=n)
@@ -138,7 +148,7 @@ class StereoConfig(object):
                 else:
                     index_selected = np.linspace(0, len(colormaps_selected), n, endpoint=False, dtype=int)
                     colormaps_selected = [colormaps_selected[i] for i in index_selected]
-        
+
         return colormaps_selected
 
     @property
@@ -244,6 +254,8 @@ class StereoConfig(object):
             facecolor: Optional[str] = None,
             transparent: bool = False
     ):
+        from matplotlib import rcParams
+
         if fontsize is not None:
             rcParams['font.size'] = fontsize
         if color_map is not None:
@@ -261,6 +273,9 @@ class StereoConfig(object):
         """
         reset `matplotlib.rcParams` to defaults.
         """
+        from matplotlib import rcParams
+        from matplotlib import rcParamsDefault
+
         rcParams.update(rcParamsDefault)
 
 

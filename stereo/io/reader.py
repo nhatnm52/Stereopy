@@ -22,8 +22,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from scipy.sparse import csr_matrix
-from shapely.geometry import MultiPoint
-from shapely.geometry import Point
 from typing_extensions import Literal
 
 from stereo.core.cell import Cell
@@ -33,7 +31,7 @@ from stereo.core.stereo_exp_data import AnnBasedStereoExpData
 from stereo.core.stereo_exp_data import StereoExpData
 from stereo.core.result import _BaseResult
 from stereo.io import h5ad
-from stereo.io.utils import(
+from stereo.io.utils import (
     integrate_matrix_by_genes,
     transform_marker_genes_to_anndata,
     get_gem_comments
@@ -117,7 +115,7 @@ def read_gem(
             df = parse_bin_coor(df, bin_size)
         else:
             df = parse_bin_coor_no_offset(df, bin_size)
-    
+
     if gene_name_index and 'geneName' in df.columns:
         df['geneID'] = df['geneName']
 
@@ -202,6 +200,8 @@ def parse_cell_bin_coor(df):
 
 
 def make_multipoint(x):
+    from shapely.geometry import MultiPoint, Point
+
     p = [Point(i) for i in zip(x['x'], x['y'])]
     mlp = MultiPoint(p).convex_hull
     x_center = mlp.centroid.x
@@ -455,6 +455,7 @@ def _read_stereo_h5_result(key_record: dict, data: StereoExpData, f: Union[h5py.
                     data_key = full_key.split('@')[1]
                     data.tl.result[res_key][data_key] = h5ad.read_group(f[full_key])
 
+
 def _read_anndata_from_group(f: h5py.Group) -> AnnBasedStereoExpData:
     from distutils.version import StrictVersion
     from anndata import __version__ as anndata_version
@@ -473,6 +474,7 @@ def _read_anndata_from_group(f: h5py.Group) -> AnnBasedStereoExpData:
     data.merged = f.attrs.get('merged', False)
     data.spatial_key = f.attrs.get('spatial_key', 'spatial')
     return data
+
 
 @ReadWriteUtils.check_file_exists
 def read_h5ms(file_path, use_raw=True, use_result=True):
@@ -997,7 +999,7 @@ def stereo_to_anndata(
             for bno, sn in data.sn.items():
                 sn_list.append([bno, sn])
         adata.uns['sn'] = pd.DataFrame(sn_list, columns=['batch', 'sn'])
-    
+
     for key, value in data.layers.items():
         adata.layers[key] = deepcopy(value)
 
@@ -1053,7 +1055,8 @@ def stereo_to_anndata(
                 if key == 'pca':
                     variance_ratio_key = f'{res_key}_variance_ratio'
                     if variance_ratio_key in data.tl.result:
-                        logger.info(f"Adding data.tl.result['{variance_ratio_key}'] into adata.uns['{key}_variance_ratio'] .")
+                        logger.info(
+                            f"Adding data.tl.result['{variance_ratio_key}'] into adata.uns['{key}_variance_ratio'] .")
                         adata.uns[variance_ratio_key] = data.tl.result[variance_ratio_key]
             elif key == 'neighbors':
                 # neighbor :seurat use uns for conversion to @graph slot, but scanpy canceled neighbors of uns at present. # noqa
@@ -1147,7 +1150,7 @@ def stereo_to_anndata(
         logger.info("Rename QC info.")
         adata.obs.rename(columns={'total_counts': "nCount_Spatial", "n_genes_by_counts": "nFeature_Spatial",
                                   "pct_counts_mt": 'percent.mito'}, inplace=True)
-    
+
     if image is not None:
         from PIL import Image
         im_path = Path(image)
@@ -1157,7 +1160,7 @@ def stereo_to_anndata(
             raise ValueError(f'The image {image} is not a file.')
         if im_library_id is None:
             raise ValueError("The image library id is necessary when adding image.")
-        Image.MAX_IMAGE_PIXELS = None # for reading large images
+        Image.MAX_IMAGE_PIXELS = None  # for reading large images
         with Image.open(im_path) as im:
             height, width = im.size
             height_hires = np.round(height * im_hires / 100).astype(int)
@@ -1202,7 +1205,6 @@ def stereo_to_anndata(
                 hires.save(image_dir/'tissue_hires_image.png')
                 lowres.save(image_dir/'tissue_lowres_image.png')
                 adata.uns['spatial'][im_library_id]['metadata']['image_dir'] = image_dir.absolute().as_posix()
-                
 
     if len(data.tl.result.keys()) > 0:
         adata.uns['result_keys'] = list(data.tl.result.keys())
@@ -1285,7 +1287,7 @@ def read_gef(
         gene_list: Optional[list] = None,
         region: Optional[list] = None,
         gene_name_index: Optional[bool] = False,
-        num_threads: int = -1 
+        num_threads: int = -1
 ):
     """
     Read the GEF (.h5) file, and generate the StereoExpData object.
@@ -1342,7 +1344,8 @@ def read_gef(
                 gene_list = []
             if region is None:
                 region = []
-            uniq_cell, gene_names, count, cell_ind, gene_ind, dnb_cnt, cell_area, gene_id = gef.get_filtered_data(region, gene_list)
+            uniq_cell, gene_names, count, cell_ind, gene_ind, dnb_cnt, cell_area, gene_id = gef.get_filtered_data(
+                region, gene_list)
             gene_num = gene_names.size
             cell_num = uniq_cell.size
             if cell_num == 0 or gene_num == 0:
@@ -1359,7 +1362,7 @@ def read_gef(
             if gene_name_index:
                 if len(gene_id[0]) > 0:
                     exp_matrix, gene_names = integrate_matrix_by_genes(gene_names, cell_num,
-                                                            exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
+                                                                       exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
                 data.genes = Gene(gene_name=gene_names)
             else:
                 data.genes = Gene(gene_name=gene_id)
@@ -1441,7 +1444,7 @@ def read_gef(
             if gene_name_index:
                 if len(gene_id[0]) > 0:
                     exp_matrix, gene_names = integrate_matrix_by_genes(gene_names, cell_num,
-                                                            exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
+                                                                       exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
                 data.genes = Gene(gene_name=gene_names)
             else:
                 data.genes = Gene(gene_name=gene_id)
@@ -1456,15 +1459,15 @@ def read_gef(
             gene_names, gene_id = gef.get_gene_names()
             gene_num = gef.get_gene_num()
             data.cells = Cell(cell_name=cell_names)
-            if len(gene_id[0]) == 0: # an old version gef file, no gene id
+            if len(gene_id[0]) == 0:  # an old version gef file, no gene id
                 gene_name_index = True
-            
+
             cell_ind, gene_ind, count = gef.get_sparse_matrix_indices2()
             exp_matrix = csr_matrix((count, (cell_ind, gene_ind)), shape=(cell_num, gene_num), dtype=np.uint32)
             if gene_name_index:
                 if len(gene_id[0]) > 0:
                     exp_matrix, gene_names = integrate_matrix_by_genes(gene_names, cell_num,
-                                                            exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
+                                                                       exp_matrix.data, exp_matrix.indices, exp_matrix.indptr)
                 data.genes = Gene(gene_name=gene_names)
             else:
                 data.genes = Gene(gene_name=gene_id)
@@ -1472,7 +1475,7 @@ def read_gef(
             data.exp_matrix = exp_matrix if is_sparse else exp_matrix.toarray()
             data.position = np.array(list(
                 (zip(np.right_shift(cell_names, 32), np.bitwise_and(cell_names, 0xffffffff))))).astype('uint32')
-            
+
         logger.info(f'the matrix has {data.cell_names.size} cells, and {data.gene_names.size} genes.')
     logger.info('read_gef end.')
 
@@ -1574,6 +1577,7 @@ def read_gef_info(file_path: str):
 
     return info_dict
 
+
 @ReadWriteUtils.check_file_exists
 def mudata_to_msdata(
     file_path: str = None,
@@ -1609,7 +1613,7 @@ def mudata_to_msdata(
     except ImportError:
         raise ImportError("Please install mudata first: `pip install mudata`.")
     from stereo.core.ms_data import MSData
-    
+
     mudata = read_h5mu(file_path)
 
     mod_keys = list(mudata.mod.keys())
@@ -1624,7 +1628,7 @@ def mudata_to_msdata(
                 left_mod_keys.append(k)
         sample_names.sort(key=lambda x: int(x.split('_')[1]))
         mod_keys = left_mod_keys
-    
+
     data_list = [AnnBasedStereoExpData(based_ann_data=mudata[n]) for n in sample_names if n in mudata.mod]
     if len(data_list) == 0:
         raise ValueError("No sample data found in the MuData object.")
@@ -1632,7 +1636,7 @@ def mudata_to_msdata(
         names = list(mudata.uns['names'])
     else:
         names = sample_names
-    
+
     var_type = mudata.uns.get('var_type', 'intersect')
     relationship = mudata.uns.get('relationship', 'other')
     relationship_info = mudata.uns.get('relationship_info', {})
@@ -1648,7 +1652,7 @@ def mudata_to_msdata(
     if entire_merged_data_name is None:
         entire_merged_data_name = ms_data.generate_scope_key(ms_data.names)
     entire_merged_data = None
-    
+
     if scope_names is None:
         scope_names = []
         left_mod_keys = []
@@ -1659,7 +1663,7 @@ def mudata_to_msdata(
             else:
                 left_mod_keys.append(k)
         mod_keys = left_mod_keys
-    
+
     scopes_data = {
         n: AnnBasedStereoExpData(based_ann_data=mudata[n]) for n in scope_names if n in mudata.mod
     }
@@ -1680,7 +1684,7 @@ def mudata_to_msdata(
             if n not in ms_data.scopes_data:
                 continue
             ms_data.tl.result_keys[n] = list(k)
-    
+
     del mudata
 
     return ms_data
